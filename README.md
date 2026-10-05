@@ -11,15 +11,16 @@ It's primarily designed for Firefox and Chrome with
 or
 [FireMonkey ![Firefox logo](https://raw.githubusercontent.com/OpenUserJS/OpenUserJS.org/master/public/images/ua/firefox16.png)](https://addons.mozilla.org/en-US/firefox/addon/firemonkey/).
 
-[**Click here for install**](https://greasyfork.org/scripts/35443-show-rottentomatoes-meter/code/Show%20Rottentomatoes%20meter.user.js)  
+[**Click here for install**](https://raw.githubusercontent.com/danzig666/Rottentomatoes-userscript/master/Show_Rottentomatoes_meter.user.js)  
 Tested with Firefox/**Tampermonkey** and Chrome/**Tampermonkey**.
+
+> This is a fork of [cvzi/Rottentomatoes-userscript](https://github.com/cvzi/Rottentomatoes-userscript).
+> Changes: fixed IMDb (language detection broke after an IMDb redesign), added mobile IMDb support
+> (m.imdb.com and the phone layout of www.imdb.com, tap a score bar to see its details), removed trakt.tv support.
+> Updates are installed from this fork, not from Greasy Fork.
 
 I develop a similar script for the [Metacritic](https://www.metacritic.com/) score, see [cvzi/Metacritic-userscript](https://github.com/cvzi/Metacritic-userscript/)  
 and for the [Letterboxd.com](https://letterboxd.com/) rating, see [cvzi/Letterboxd-userscript](https://github.com/cvzi/Letterboxd-userscript/)
-
-## [Trakt.tv addon](https://greasyfork.org/en/scripts/498861-show-rottentomatoes-meter-trakt-ui-addon):
-There is a third-party add-on script, that integrates the score into trakt.tv header:  
-[**Click here for install**](https://update.greasyfork.org/scripts/498861/Show%20Rottentomatoes%20meter%20-%20Trakt%20UI%20Addon.user.js)
 
 ## Symbols:
 
@@ -34,7 +35,7 @@ There is a third-party add-on script, that integrates the score into trakt.tv he
 
 ## Supported sites and products:
 
- * imdb.com
+ * imdb.com (desktop and mobile)
  * metacritic.com
  * letterboxd.com
  * BoxOfficeMojo
@@ -57,7 +58,6 @@ There is a third-party add-on script, that integrates the score into trakt.tv he
  * ShareTV
  * save.tv
  * argenteam.net
- * trakt.tv
 
 Screenshot:
 

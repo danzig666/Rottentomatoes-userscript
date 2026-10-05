@@ -2,7 +2,8 @@
 // @name        Show Rottentomatoes meter
 // @description Show Rotten Tomatoes score on imdb.com, metacritic.com, letterboxd.com, BoxOfficeMojo, serienjunkies.de, Amazon, Google Play, allmovie.com, Wikipedia, themoviedb.org, movies.com, tvmaze.com, tvguide.com, followshows.com, thetvdb.com, tvnfo.com, save.tv
 // @namespace   cuzi
-// @updateURL   https://openuserjs.org/meta/cuzi/Show_Rottentomatoes_meter.meta.js
+// @updateURL   https://raw.githubusercontent.com/danzig666/Rottentomatoes-userscript/master/Show_Rottentomatoes_meter.user.js
+// @downloadURL https://raw.githubusercontent.com/danzig666/Rottentomatoes-userscript/master/Show_Rottentomatoes_meter.user.js
 // @grant       GM_xmlhttpRequest
 // @grant       GM_setValue
 // @grant       GM_getValue
@@ -13,7 +14,7 @@
 // @require     https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js
 // @license     GPL-3.0-or-later; https://www.gnu.org/licenses/gpl-3.0.txt
 // @icon        https://raw.githubusercontent.com/hfg-gmuend/openmoji/master/color/72x72/1F345.png
-// @version     50
+// @version     50.1
 // @connect     www.rottentomatoes.com
 // @connect     algolia.net
 // @connect     www.fandango.com
@@ -36,6 +37,8 @@
 // @match       https://www.amazon.it/*
 // @match       https://www.imdb.com/title/*
 // @match       https://www.imdb.com/*/title/*
+// @match       https://m.imdb.com/title/*
+// @match       https://m.imdb.com/*/title/*
 // @match       https://www.serienjunkies.de/*
 // @match       https://www.boxofficemojo.com/movies/*
 // @match       https://www.boxofficemojo.com/release/*
@@ -67,7 +70,6 @@
 // @match       https://psa.wf/*
 // @match       https://www.save.tv/*
 // @match       https://www.wikiwand.com/*
-// @match       https://trakt.tv/*
 // ==/UserScript==
 
 /* global GM, $, unsafeWindow */
@@ -89,6 +91,9 @@ const emojiNauseated = '\uD83E\uDD22'
 
 // Detect dark theme of darkreader.org extension or normal css dark theme from browser
 const darkTheme = ('darkreaderScheme' in document.documentElement.dataset && document.documentElement.dataset.darkreaderScheme) || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+
+// Touch devices (phones, tablets) cannot show title="" tooltips on hover
+const touchDevice = window.matchMedia && window.matchMedia('(hover: none)').matches
 
 function minutesSince (time) {
   const seconds = ((new Date()).getTime() - time.getTime()) / 1000
@@ -126,6 +131,11 @@ function asyncRequest (data) { // No cache (unlike in the Metacritic userscript)
     console.debug(`${scriptName}: GM.xmlHttpRequest`, data)
     GM.xmlHttpRequest(data)
   })
+}
+
+function imdbPageIsEnglish () {
+  // IMDb sets <html lang="en-US"> etc. on desktop and mobile layouts
+  return (document.documentElement.lang || '').toLowerCase().startsWith('en')
 }
 
 const parseLDJSONCache = {}
@@ -538,7 +548,7 @@ function showMeter (arr, time) {
     bottom: 0,
     right: 0,
     minWidth: 100,
-    maxWidth: 400,
+    maxWidth: 'min(400px, calc(100vw - 10px))',
     maxHeight: '95%',
     overflow: 'auto',
     backgroundColor: darkTheme ? '#262626' : 'white',
@@ -582,9 +592,17 @@ function showMeter (arr, time) {
   const sub = $('<div></div>').appendTo(main)
   $('<time style="color:#b6b6b6; font-size: 11px;" datetime="' + time + '" title="' + time.toLocaleTimeString() + ' ' + time.toLocaleDateString() + '">' + minutesSince(time) + '</time>').appendTo(sub)
   $('<a style="color:#b6b6b6; font-size: 11px;" target="_blank" href="' + baseURLOpenTab.replace('{query}', encodeURIComponent(current.query)) + '" title="Open Rotten Tomatoes">@rottentomatoes.com</a>').appendTo(sub)
-  $('<span title="Hide me" style="cursor:pointer; float:right; color:#b6b6b6; font-size: 11px; padding-left:5px;padding-top:3px">&#10062;</span>').appendTo(sub).click(function () {
+  $('<span title="Hide me" style="cursor:pointer; float:right; color:#b6b6b6; font-size: ' + (touchDevice ? '18px; padding-left:12px' : '11px; padding-left:5px') + ';padding-top:3px">&#10062;</span>').appendTo(sub).click(function () {
     document.body.removeChild(this.parentNode.parentNode)
   })
+
+  if (touchDevice) {
+    // No hover on touch screens: tap a score bar to show/hide its tooltip text
+    main.find('div[title]').each(function () {
+      const details = $('<div style="display:none; white-space:pre-line; font-size:11px; padding:2px 0 4px 0"></div>').text(this.title).insertAfter(this)
+      $(this).css('cursor', 'pointer').click(() => details.toggle())
+    })
+  }
 }
 
 const Always = () => true
@@ -625,7 +643,7 @@ const sites = {
             }
           }
 
-          const pageNotEnglish = document.querySelector('[for="nav-language-selector"]').textContent.toLowerCase() !== 'en' || !navigator.language.startsWith('en')
+          const pageNotEnglish = !imdbPageIsEnglish() || !navigator.language.startsWith('en')
           const pageNotMovieHomePage = !document.title.match(/(.+?)(?:\s+\((\d+)\))? - /)
 
           // If the page is not in English or the browser is not in English, request page in English.
@@ -688,7 +706,7 @@ const sites = {
             }
           }
 
-          const pageNotEnglish = document.querySelector('[for="nav-language-selector"]').textContent.toLowerCase() !== 'en' || !navigator.language.startsWith('en')
+          const pageNotEnglish = !imdbPageIsEnglish() || !navigator.language.startsWith('en')
           const pageNotMovieHomePage = !document.title.match(/(.+?)(?:\s+\(.*?(\d{4}).*\))? - /)
 
           // If the page is not in English or the browser is not in English, request page in English.
@@ -1220,26 +1238,6 @@ const sites = {
       type: 'tv',
       data: () => document.querySelector('h1').textContent.replace(/\(tv series\)/i, '').trim()
     }]
-  },
-  trakt: {
-    host: ['trakt.tv'],
-    condition: Always,
-    products: [
-      {
-        condition: () => document.location.pathname.startsWith('/movies/'),
-        type: 'movie',
-        data: function () {
-          const title = Array.from(document.querySelector('.summary h1').childNodes).filter(node => node.nodeType === node.TEXT_NODE).map(node => node.textContent).join(' ').trim()
-          const year = document.querySelector('.summary h1 .year').textContent
-          return [title, year]
-        }
-      },
-      {
-        condition: () => document.location.pathname.startsWith('/shows/'),
-        type: 'tv',
-        data: () => Array.from(document.querySelector('.summary h1').childNodes).filter(node => node.nodeType === node.TEXT_NODE).map(node => node.textContent).join(' ').trim()
-      }
-    ]
   }
 }
 
